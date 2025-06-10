@@ -32,16 +32,27 @@ public class AuthorService {
     @Transactional
     public AuthorModel saveAuthor(AuthorRecordDto authorRecordDto) {
         AuthorModel author = new AuthorModel();
-
-//        if (authorRepository.existsById(author.getId())){
-//            throw new Exception("Author already exists");
-//        }
-
+       
         author.setName(authorRecordDto.name());
         author.setNationality(authorRecordDto.nationality());
         author.setBirthDate(authorRecordDto.birthDate());
 
         return authorRepository.save(author);
+    }
+
+    @Transactional
+    public AuthorModel updateAuthor(UUID id, AuthorRecordDto authorRecordDto) {
+        Optional<AuthorModel> optionalAuthor = authorRepository.findById(id);
+
+        if (optionalAuthor.isPresent()) {
+            AuthorModel author = optionalAuthor.get();
+            author.setName(authorRecordDto.name());
+            author.setNationality(authorRecordDto.nationality());
+            author.setBirthDate(authorRecordDto.birthDate());
+            return authorRepository.save(author);
+        } else {
+            throw new RuntimeException("Author not found with id: " + id);
+        }
     }
 
     @Transactional
