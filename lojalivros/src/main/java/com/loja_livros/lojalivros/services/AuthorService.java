@@ -5,6 +5,7 @@ import com.loja_livros.lojalivros.models.AuthorModel;
 import com.loja_livros.lojalivros.repositories.AuthorRepository;
 import com.loja_livros.lojalivros.repositories.BookRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,13 +14,12 @@ import java.util.UUID;
 
 @Service
 public class AuthorService {
-    private final BookRepository bookRepository;
-    private final AuthorRepository authorRepository;
+    @Autowired
+     BookRepository bookRepository;
 
-    public AuthorService(BookRepository bookRepository, AuthorRepository authorRepository) {
-        this.bookRepository = bookRepository;
-        this.authorRepository = authorRepository;
-    }
+    @Autowired
+    AuthorRepository authorRepository;
+
 
     public List<AuthorModel> getAllAuthors(){
         return authorRepository.findAll();

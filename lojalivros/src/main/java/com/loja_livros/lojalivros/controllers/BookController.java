@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/bookstore/books")
+@RequestMapping("/api/bookstore/books")
 @Tag(name = "books")
 public class BookController {
 
@@ -27,27 +27,24 @@ public class BookController {
         this.bookService = bookservice;
     }
 
-    @Operation(summary = "Consulta de livros", method = "GET")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de usuarios")
-    })
     @GetMapping
     public ResponseEntity<List<BookModel>> getAllBooks(){
         return ResponseEntity.status(HttpStatus.OK).body(bookService.getAllBooks());
     }
 
-    //swagger
-    @Operation(summary = "Cadastro de livros", method = "POST")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Livro Cadastrado"),
-            @ApiResponse(responseCode = "400", description = "Informações nulas ou vazias"),
-            @ApiResponse(responseCode = "409", description = "Livro existente")
-    })
-    //API
+    @GetMapping("{id}")
+    public ResponseEntity<Object> getOneBook(@PathVariable UUID id){
+        BookModel book = bookService.getOneBook(id);
+        if (book == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Book not found "); // HTTP 404
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(bookService.getOneBook(id)); // HTTP 200
+    }
+
     @PostMapping
     public ResponseEntity<?> saveBook(@RequestBody BookRecordDto bookRecordDto){
         if (bookRecordDto.title() == null || bookRecordDto.title().isEmpty()){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("TItulo do Livro é obrigatório"); // HTTO 400
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title of Book is Mandatory"); // HTTO 400
         }
         try {
             return ResponseEntity.status(HttpStatus.CREATED).body(bookService.saveBook(bookRecordDto));
@@ -59,7 +56,11 @@ public class BookController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBook(@PathVariable UUID id){
         bookService.deleteBook(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); //status(HttpStatus.OK).body("Book deleted successfully.");
-    }
+        try {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();    //status(HttpStatus.OK).body("Book deleted successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Book not found with id: " + id); // HTTP 404
 
+        }
+    }
 }
