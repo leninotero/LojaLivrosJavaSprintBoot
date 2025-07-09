@@ -14,6 +14,7 @@ Este é um projeto de estudo que consiste na criação de uma API REST para uma 
 - **PostgreSQL**
 - **Springdoc OpenAPI (Swagger UI)**
 - **Maven**
+- **Docker**
 
 ## 📘 Sobre o Spring Boot
 
@@ -66,7 +67,7 @@ springdoc.api-docs.path=/api-docs
 springdoc.swagger-ui.path=/swagger-ui.html
 ```
 
-▶️ Como Executar o Projeto
+## ▶️ Como Executar o Projeto
 1. Clone o repositório:
 ```bat
 git clone https://github.com/seu-usuario/bookstore-api.git
@@ -77,6 +78,21 @@ git clone https://github.com/seu-usuario/bookstore-api.git
 ```bat
 ./mvnw spring-boot:run
 ```
+
+## Docker
+Execute o seguinte comando para buildar a imagem no docker:
+```bat
+docker build -t lojalivros .
+```
+Execute o seguinte comando para dar startar a imagem
+```bat
+docker run -p 8080:8080 lojalivros
+```
+Execute este comando para executar o docker compose com as configurações do postgreSQL
+```bat
+ docker-compose up -d
+```
+
 ## 🧠 Conclusão
 - Este projeto serve como uma base para aprender sobre:
 - Criação de APIs REST com Spring Boot
