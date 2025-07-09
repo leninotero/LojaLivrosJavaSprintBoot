@@ -80,17 +80,17 @@ git clone https://github.com/seu-usuario/bookstore-api.git
 ```
 
 ## Docker
-Execute o seguinte comando para buildar a imagem no docker:
+Crie uma rede Docker para a aplicação e o banco de dados:
 ```bat
-docker build -t lojalivros .
+docker network create app-network
 ```
-Execute o seguinte comando para dar startar a imagem
+Suba o PostgreSQL usando essa rede:
 ```bat
-docker run -p 8080:8080 lojalivros
+docker run --name postgres-db --network app-network -e POSTGRES_DB=bookstore -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:latest
 ```
-Execute este comando para executar o docker compose com as configurações do postgreSQL
+Suba a aplicação usando a mesma rede:
 ```bat
- docker-compose up -d
+ docker run --name springboot-app --network app-network -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/bookstore -e SPRING_DATASOURCE_USERNAME=postgres -e SPRING_DATASOURCE_PASSWORD=postgres -p 8080:8080 bookstore
 ```
 
 ## 🧠 Conclusão
