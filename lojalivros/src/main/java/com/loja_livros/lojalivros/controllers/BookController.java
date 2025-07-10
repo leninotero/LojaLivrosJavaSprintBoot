@@ -29,7 +29,11 @@ public class BookController {
 
     @GetMapping
     public ResponseEntity<List<BookModel>> getAllBooks(){
-        return ResponseEntity.status(HttpStatus.OK).body(bookService.getAllBooks());
+        try{
+            return ResponseEntity.status(HttpStatus.OK).body(bookService.getAllBooks());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // HTTP 500
+        }
     }
 
     @GetMapping("{id}")
@@ -53,6 +57,18 @@ public class BookController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBook(@PathVariable UUID id, @RequestBody BookRecordDto bookRecordDto){
+        if (bookRecordDto.title() == null || bookRecordDto.title().isEmpty()){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title of Book is Mandatory"); // HTTO 400
+        }
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(bookService.updateBook(id, bookRecordDto));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Book not found with id: " + id); // HTTP 404
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBook(@PathVariable UUID id){
         bookService.deleteBook(id);
@@ -60,7 +76,6 @@ public class BookController {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();    //status(HttpStatus.OK).body("Book deleted successfully.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Book not found with id: " + id); // HTTP 404
-
         }
     }
 }

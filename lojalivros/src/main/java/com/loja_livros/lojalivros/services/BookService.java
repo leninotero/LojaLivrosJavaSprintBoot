@@ -43,18 +43,15 @@ public class BookService {
         book.setTitle(bookRecordDto.title());
         book.setPublisherYear(bookRecordDto.publisherYear());
 
-        //book.setPublisher(publisherRepository.findById(bookRecordDto.publisherId()).get());
         var publisher = publisherRepository.findById(bookRecordDto.publisherId())
                 .orElseThrow(() -> new IllegalArgumentException("Publisher not found with id: " + bookRecordDto.publisherId()));
         book.setPublisher(publisher);
 
-        //book.setAuthors(authorRepository.findAllById(bookRecordDto.authorIds()).stream().collect(Collectors.toSet()));
         var authors = authorRepository.findAllById(bookRecordDto.authorIds());
         if (authors.size() != bookRecordDto.authorIds().size()) {
             throw new IllegalArgumentException("One or more authors not found with the provided IDs.");
         }
         book.setAuthors(new HashSet<>(authors));
-        //book.setAuthors(authors.stream().collect(Collectors.toSet()));
 
         ReviewModel reviewModel = new ReviewModel(); //instancia criada para relacionar um livro a um review
         reviewModel.setComment(bookRecordDto.reviewComment()); //aqui vai ser setado o resumo do livro na classe review
@@ -68,10 +65,36 @@ public class BookService {
         }
     }
 
-//    @Transactional
-//    public BookModel updateBook(UUID id, BookRecordDto bookRecordDto){
-//
-//    }
+    @Transactional
+    public BookModel updateBook(UUID id, BookRecordDto bookRecordDto) {
+        BookModel book = bookRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + id));
+
+        book.setTitle(bookRecordDto.title());
+        book.setPublisherYear(bookRecordDto.publisherYear());
+
+        var publisher = publisherRepository.findById(bookRecordDto.publisherId())
+                .orElseThrow(() -> new IllegalArgumentException("Publisher not found with id: " + bookRecordDto.publisherId()));
+        book.setPublisher(publisher);
+
+        var authors = authorRepository.findAllById(bookRecordDto.authorIds());
+        if (authors.size() != bookRecordDto.authorIds().size()) {
+            throw new IllegalArgumentException("One or more authors not found with the provided IDs.");
+        }
+        book.setAuthors(new HashSet<>(authors));
+
+        ReviewModel reviewModel = new ReviewModel();
+        reviewModel.setComment(bookRecordDto.reviewComment());
+        reviewModel.setBook(book);
+        book.setReview(reviewModel);
+
+        try {
+            return bookRepository.save(book);
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating book: " + e.getMessage());
+        }
+    }
+
 
     @Transactional
     public void deleteBook(UUID id){
