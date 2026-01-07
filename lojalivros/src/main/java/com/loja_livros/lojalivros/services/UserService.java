@@ -26,8 +26,11 @@ public class UserService {
         userModel.setName(requestRecordDto.name());
         userModel.setEmail(requestRecordDto.email());
         userModel.setPassword(passwordEncoder.encode(requestRecordDto.password()));
-        userRepository.save(userModel);
 
         return userRepository.save(userModel);
+    }
+
+    public List<UserModel> getAllUsers(){
+        return userRepository.findAll();
     }
 }

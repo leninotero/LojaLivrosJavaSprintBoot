@@ -59,4 +59,13 @@ public class UserController {
         }
         return ResponseEntity.badRequest().build();
     }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<UserModel>> getAllUsers(){
+        try{
+            return ResponseEntity.status(HttpStatus.OK).body(userService.getAllUsers());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 }
