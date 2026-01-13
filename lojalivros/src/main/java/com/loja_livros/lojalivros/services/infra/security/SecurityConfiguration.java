@@ -31,9 +31,11 @@ public class SecurityConfiguration {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST,"/api/bookstore/auth/login", "/api/bookstore/auth/register").permitAll() // Allow public access to login and register endpoints
+                .requestMatchers(HttpMethod.GET,"api/bookstore/auth/users").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/bookstore/authors", "/api/bookstore/authors/{id}").permitAll() // Allow public access to specific GET endpoints,
                 .requestMatchers(HttpMethod.GET, "/api/bookstore/books", "/api/bookstore/books/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET,"/api/bookstore/publishers", "/api/bookstore/publishers/{id}").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/index.html", "/swagger-ui/**","/swagger/**").permitAll()
                 .anyRequest().authenticated() // Require authentication for all other requests
             )
             .addFilterBefore(securityFilterService, UsernamePasswordAuthenticationFilter.class);

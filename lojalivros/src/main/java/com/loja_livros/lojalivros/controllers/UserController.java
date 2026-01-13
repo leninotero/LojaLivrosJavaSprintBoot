@@ -7,7 +7,6 @@ import com.loja_livros.lojalivros.models.UserModel;
 import com.loja_livros.lojalivros.repositories.UserRepository;
 import com.loja_livros.lojalivros.services.UserService;
 import com.loja_livros.lojalivros.services.infra.security.TokenService;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
