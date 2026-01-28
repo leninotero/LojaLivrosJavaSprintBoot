@@ -121,5 +121,15 @@ class UserServiceTest {
             assertNotNull(result);
             assertEquals(1, result.size());
         }
+
+        @Test
+        @DisplayName("Should throw exception when repository fails")
+        void testShouldThrowWhenFindAllFails() {
+            doThrow(new RuntimeException()).when(userRepository).findAll();
+
+            assertThrows(RuntimeException.class, () -> userService.getAllUsers());
+
+            verify(userRepository, times(1)).findAll();
+        }
     }
 }
