@@ -1,18 +1,16 @@
 package com.loja_livros.lojalivros.controllers;
 
 import com.loja_livros.lojalivros.dtos.BookRecordDto;
+import com.loja_livros.lojalivros.exceptions.BadRequestException;
 import com.loja_livros.lojalivros.models.BookModel;
 import com.loja_livros.lojalivros.services.BookService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.apache.coyote.Response;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.PreparedStatement;
+import com.loja_livros.lojalivros.exceptions.*;
+
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,9 +28,9 @@ public class BookController {
     @GetMapping
     public ResponseEntity<List<BookModel>> getAllBooks(){
         try{
-            return ResponseEntity.status(HttpStatus.OK).body(bookService.getAllBooks());
+            return ResponseEntity.ok(bookService.getAllBooks()); // HTTP 200
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // HTTP 500
+            return ResponseEntity.internalServerError().build(); // HTTP 500
         }
     }
 
@@ -40,42 +38,40 @@ public class BookController {
     public ResponseEntity<Object> getOneBook(@PathVariable UUID id){
         BookModel book = bookService.getOneBook(id);
         if (book == null){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Book not found "); // HTTP 404
+            return ResponseEntity.notFound().build(); // HTTP 404
         }
-        return ResponseEntity.status(HttpStatus.OK).body(bookService.getOneBook(id)); // HTTP 200
+        return ResponseEntity.ok(bookService.getOneBook(id)); // HTTP 200
     }
 
     @PostMapping
-    public ResponseEntity<?> saveBook(@RequestBody BookRecordDto bookRecordDto){
+    public ResponseEntity<BookModel> saveBook(@RequestBody BookRecordDto bookRecordDto){
         if (bookRecordDto.title() == null || bookRecordDto.title().isEmpty()){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title of Book is Mandatory"); // HTTO 400
+            throw new BadRequestException("Title of Book is Mandatory");
         }
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(bookService.saveBook(bookRecordDto));
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage()); // HTTP 409
-        }
+        BookModel savedBook = bookService.saveBook(bookRecordDto);
+        return ResponseEntity.created(URI.create("/api/bookstore/books/" + savedBook.getId())).body(savedBook);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateBook(@PathVariable UUID id, @RequestBody BookRecordDto bookRecordDto){
+    public ResponseEntity<BookModel> updateBook(@PathVariable UUID id, @RequestBody BookRecordDto bookRecordDto){
         if (bookRecordDto.title() == null || bookRecordDto.title().isEmpty()){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title of Book is Mandatory"); // HTTO 400
+            throw new BadRequestException("Title of Book is Mandatory");
         }
-        try {
-            return ResponseEntity.status(HttpStatus.OK).body(bookService.updateBook(id, bookRecordDto));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Book not found with id: " + id); // HTTP 404
+        BookModel existingBook = bookService.getOneBook(id);
+        if (existingBook == null) {
+            throw new ResourceNotFoundException("Book not found with id: " + id);
         }
+        BookModel updatedBook = bookService.updateBook(id, bookRecordDto);
+        return ResponseEntity.ok(updatedBook);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteBook(@PathVariable UUID id){
-        bookService.deleteBook(id);
-        try {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();    //status(HttpStatus.OK).body("Book deleted successfully.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Book not found with id: " + id); // HTTP 404
+    public ResponseEntity<Void> deleteBook(@PathVariable UUID id){
+        BookModel book = bookService.getOneBook(id);
+        if (book == null) {
+            throw new ResourceNotFoundException("Book not found with id: " + id);
         }
+        bookService.deleteBook(id);
+        return ResponseEntity.noContent().build();
     }
 }

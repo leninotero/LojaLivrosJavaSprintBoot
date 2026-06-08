@@ -3,17 +3,15 @@ package com.loja_livros.lojalivros.controllers;
 import com.loja_livros.lojalivros.dtos.PublisherRecordDto;
 import com.loja_livros.lojalivros.models.PublisherModel;
 import com.loja_livros.lojalivros.services.PublisherService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import com.loja_livros.lojalivros.exceptions.*;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.loja_livros.lojalivros.exceptions.*;
+
+import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,60 +19,55 @@ import java.util.UUID;
 @RequestMapping("/api/bookstore/publishers")
 public class PublisherController {
 
-    @Autowired
-    PublisherService publisherService;
+    private final PublisherService publisherService;
+
+    public PublisherController(PublisherService publisherService) {
+        this.publisherService = publisherService;
+    }
 
     @GetMapping
     public ResponseEntity<List<PublisherModel>> listAllPublishers() {
-        if (publisherService.getAllPublishers().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
+        List<PublisherModel> publishers = publisherService.getAllPublishers();
+        if (publishers.isEmpty()) {
+            throw new ResourceNotFoundException("No publishers found");
         }
-        return ResponseEntity.status(HttpStatus.OK).body(publisherService.getAllPublishers());
+        return ResponseEntity.ok(publishers);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getOnePublisher(@PathVariable UUID id) {
+    public ResponseEntity<PublisherModel> getOnePublisher(@PathVariable UUID id) {
         Optional<PublisherModel> publisher = publisherService.getOnePublisher(id);
-        return publisher.<ResponseEntity<Object>>map(
-                publisherModel -> ResponseEntity.status(HttpStatus.OK)
-                        .body(publisherModel))
-                        .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Publisher not found!"));
+        return ResponseEntity.ok(publisher
+                .orElseThrow(() -> new ResourceNotFoundException("Publisher not found with id: " + id)));
     }
 
     @PostMapping
-    public ResponseEntity<?> savePublisher(@RequestBody PublisherRecordDto publisherRecordDto) {
-
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(publisherService.savePublisher(publisherRecordDto));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving publisher: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Publisher already exists or error occurred: ");
+    public ResponseEntity<PublisherModel> savePublisher(@RequestBody PublisherRecordDto publisherRecordDto) {
+        if (publisherRecordDto.name() == null || publisherRecordDto.name().isBlank()) {
+            throw new BadRequestException("Publisher name is required");
         }
+        PublisherModel savedPublisher = publisherService.savePublisher(publisherRecordDto);
+        return ResponseEntity.created(URI.create("/api/bookstore/publishers/" + savedPublisher.getId()))
+                .body(savedPublisher);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePublisher(@PathVariable UUID id, @RequestBody @Valid PublisherRecordDto publisherRecordDto) {
-        try {
-            return ResponseEntity.status(HttpStatus.OK).body(publisherService.updatePublisher(id, publisherRecordDto));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Publisher not found with ID: " + id);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating publisher: " + e.getMessage());
+    public ResponseEntity<PublisherModel> updatePublisher(@PathVariable UUID id, @RequestBody @Valid PublisherRecordDto publisherRecordDto) {
+        Optional<PublisherModel> existingPublisher = publisherService.getOnePublisher(id);
+        if (existingPublisher.isEmpty()) {
+            throw new ResourceNotFoundException("Publisher not found with id: " + id);
         }
+        PublisherModel updatedPublisher = publisherService.updatePublisher(id, publisherRecordDto);
+        return ResponseEntity.ok(updatedPublisher);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletePublisher(@PathVariable UUID id) {
-        try {
-            publisherService.deletePublisher(id);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // HTTP 204
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Publisher not found with ID: " + id); // HTTP 404
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting publisher: " + e.getMessage()); // HTTP 500
+        Optional<PublisherModel> publisher = publisherService.getOnePublisher(id);
+        if (publisher.isEmpty()) {
+            throw new ResourceNotFoundException("Publisher not found with id: " + id);
         }
+        publisherService.deletePublisher(id);
+        return ResponseEntity.noContent().build();
     }
 }
